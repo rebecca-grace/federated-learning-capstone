@@ -1,48 +1,60 @@
-# OECD Country Recession Classification
+# Federated Learning Investigation of optimal settings under different levels of IID data
 
 ### 1. Folder Structure
 
 ```python
 Repository
- |-- recession_prediction_code.R	# Main code notebook
- |    |-- input               # input csv data
- |    |    |-- OECD_data.csv        # Country level economic indicators
+ |-- FL_experiments_colab.ipynb	# Main code notebook
+ |-- FL_summary_charts.ipynb	# For visualisation of summary results
+ |    |-- input               # input csv data which feeds into FL_experiments_colab.ipynb
+ |    |    |-- obesity.csv    # for the Health Care dataset examined, the other 2 datasets are loaded from packages
  |    |-- images              # for ReadMe file             
 ```
 
 ### 2. Overview
 
-For this project the main questions that will be explored are:
+Advancements in machine learning and artificial intelligence have enabled increasingly personalised on-demand services, with huge amounts of personal data being collected in real time.
+Consequently, such advancements pose considerations regarding both data privacy amongst the user base and learning efficiency for data scientists. Traditional machine learning algorithms are centralised in their approach. For example, all local data is sent to a common server which facilitates the model training centrally, before releasing a global update back to all devices. However, with more devices being connected, this raises the issue of privacy and security concerns because such devices or sensors may potentially be collecting highly sensitive information from the end user. Additionally, as more data is being generated from connected devices, it is increasingly expensive and inefficient to facilitate the communication and storage of all data generated throughout the network. 
 
-1. For deep recessions (<-5% GDP decrease in a quarter) what are the lagging economic indicators with the highest variable importance?
-2. Can we create an accurate classifier to predict the probability of negative economic growth in a country?
+A Federated Learning (FL) approach to machine learning has been recently introduced to address such concerns. A FL approach decentralises the model training such that participating devices all train on their own local models, and only share their respective model updates to a central server, as shown below.
 
-### 3. Data Source
+![result5](/images/result-5.png)
 
-The data I will be using is from OECD (Organization for Economic Cooperation and Development). This dataset contains quarterly data from 49 countries on 211 financial and socioeconomic variables ranging from household debt to taxes and oil market conditions
+In this project, we aimed to find training parameters that will reduce the number of global communication rounds in training the overall FL model, and to achieve the best model accuracy.
 
-The raw data was structured vertically with one row for country, time period, variable name and variable value. In order to be ready for model input, the data had to be transformed so each variable was a column, and where each row represented a country’s data for a specific year and quarter.
+There parameters included:
+- FL aggregator selection: FedAvg, FedProx, FedPer and SCAFFOLD
+- Label quantity distribution to each device (IID)
+- Maximum number of samples in each local model
+- Number of communication rounds
+- Number of local training epochs
+- Training batch size
+- Number of active devices to participate in training
 
-### 4. Methodology
+![result4](/images/result-4.png)
 
-The three classification models that will be tested are support vector machine, the tree-based method random forest and multinomial regression
+### 3. Experimental Framework
 
-The response variable REC_FLAG_2 had to be created from the GDP Growth variable within the data, with a GDP growth < -5% indicating recession class 2 <1% for recession class 1 otherwise positive GDP values are 0. Some of the numeric variables are currency dependent, for example some are in USD and not AUD, therefore are highly skewed. To resolve this skewness a log transformation was performed on variables that were not ratios or small values.
+![result3](/images/result-3.png)
+![result2](/images/result-2.png)
 
-Highly correlated predictors with correlation >90% were removed which left 71 predictors. Removing correlated variables was also necessary for pre-processing the data for model input, as multinomial regression assumed iid inputs. Two additional ratios were created for the self-employed to total employment and household to government savings.
+### 4. Results
 
-### 5. Results
-
-For question 1, the top 5 predictors for deeper recessions are listed below.
+The main findings were:
+1. Using fewer active devices provided better results. This might be explained by finding clearer signal from fewer rather than more devices.
+2. More epochs tend to improve accuracy in high IID settings, whereas fewer epochs work better in a low IID setting.
+3. Smaller batch size is more applicable for high IID settings, whereas higher batch size is more appropriate for low IID settings.
 
 ![result1](/images/result-1.png)
 
-This result could guide governments as to where to provide relief when these values are trending downwards.
+#### Limitations
 
-As for question 2 classification, the class (0/1 recession indicator) imbalance combined with the log transformations likely produced variables with near-zero variance which I believe made classification difficult. The log transformations could have diluted or masked some relationships with variables that had sparse or granular data therefore causing selection bias.
+1. Methodology for data quantity skew did not have the intended effect on EMD
+2. Impact of clients which have different computation power (systems heterogeneity)
+3. GPU limitations which restricted parameter values for experimentation
 
-The best model was the SVM with cubic kernel which generated a test accuracy of 73%, however with a high false positive rate.
+#### Future Directions
 
-![result2](/images/result-2.png)
+Testing different deep learning model types was out of scope for our project. A potential area for future work that is not covered fully in literature is whether the model type, for example CNN or MLP, and associated construction choices such as dropout rate, batch normalisation, number and size of hidden layers influences the accuracy across IID levels. In addition, it would be useful to investigate whether the best performing centralised model is the same or similar to the best performing in a federated setting.
 
-The prediction could have been improved by creating more ratios from the data. For example, social security benefits interacted with unemployment or ratio of short term to long term bond rates.
+An evaluation limitation we found through our project was a lack of standard benchmarks for MNIST and CIFAR-10 FL models in existing literature. Hence it was difficult to assess how our results compared to other parameter combinations that have been reported. Related to this, we see future research benefitting from focusing on a wider range of datasets with different size and label imbalance, as we attempted to do through including the Healthcare dataset in our analysis. This would enable more robust validation of findings and generalisable conclusions to be formed.
