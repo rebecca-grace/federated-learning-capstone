@@ -1,4 +1,4 @@
-# Federated Learning Investigation of optimal settings under different levels of IID data
+# Investigation of Federated Learning settings under different degrees of IID datasets
 
 ### 1. Folder Structure
 
